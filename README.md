@@ -6,7 +6,12 @@ A modern, high-performance, and responsive task workflow management web applicat
 
 ## ✨ Features
 
-- **🚀 Add & Edit Tasks**: Create tasks with titles, rich notes/descriptions, priority levels (Urgent, High, Medium, Low), tags/categories, and due dates.
+- **🚀 Add & Update Tasks**: Create and update tasks with titles, rich notes/descriptions, priority levels (Urgent, High, Medium, Low), tags/categories, and due dates.
+- **✏️ Seamless Update Flows**:
+  - Click on any task card content or row to instantly open the **Update Task** modal.
+  - Dedicated **Update** buttons on every card and list row.
+  - Click any **Priority Pill** to quickly cycle through priorities inline.
+  - Visual **Edited** badge with last-updated timestamp tracking.
 - **📊 Kanban & List Views**: Seamlessly switch between a visual Kanban workflow board (To Do, In Progress, Completed) and a structured table List View.
 - **🎯 Drag & Drop Stages**: Drag task cards directly across stages or use one-click stage shift buttons.
 - **🔍 Real-Time Search & Filtering**: Instant keyword search combined with priority and category dropdown filters.

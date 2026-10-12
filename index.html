@@ -85,6 +85,17 @@
       </div>
 
       <div class="filters-group">
+        <!-- Status / Stage Filter -->
+        <div class="select-wrapper">
+          <select id="statusFilter" aria-label="Filter by completion status">
+            <option value="all">All Statuses</option>
+            <option value="active">⏳ Active (Pending)</option>
+            <option value="completed">✅ Completed</option>
+            <option value="todo">📋 To Do</option>
+            <option value="in-progress">⚡ In Progress</option>
+          </select>
+        </div>
+
         <!-- Priority Filter -->
         <div class="select-wrapper">
           <select id="priorityFilter" aria-label="Filter by priority">
@@ -136,6 +147,19 @@
     <!-- Progress Bar Overview -->
     <div class="progress-bar-container">
       <div class="progress-bar-fill" id="progressBarFill" style="width: 0%;"></div>
+    </div>
+
+    <!-- All Tasks Completed Celebration Banner -->
+    <div id="allDoneBanner" class="all-done-banner" style="display: none;">
+      <div class="all-done-left">
+        <span class="all-done-badge">🎉 100% COMPLETE</span>
+        <h3>All Caught Up!</h3>
+        <p>You have completed every task in your workspace. Keep up the great flow!</p>
+      </div>
+      <button class="primary-btn" onclick="openAddTaskModal('todo')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        <span>Add Next Task</span>
+      </button>
     </div>
 
     <!-- MAIN VIEWPORT: BOARD VIEW -->
@@ -235,8 +259,11 @@
     <div class="modal-window" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <div class="modal-header">
         <div class="modal-title-wrap">
-          <span class="modal-badge-dot"></span>
-          <h2 id="modalTitle">Create New Task</h2>
+          <span class="modal-badge-dot" id="modalBadgeDot"></span>
+          <div>
+            <h2 id="modalTitle">Create New Task</h2>
+            <p id="modalSubtitle" class="modal-subtitle">Add a task to your workflow</p>
+          </div>
         </div>
         <button id="closeModalBtn" class="close-btn" aria-label="Close dialog">&times;</button>
       </div>
@@ -291,6 +318,11 @@
             <label for="taskDueDateInput">Due Date</label>
             <input type="date" id="taskDueDateInput">
           </div>
+        </div>
+
+        <div id="modalMetaInfo" class="modal-meta-info" style="display: none;">
+          <div class="meta-item"><span class="meta-label">Created:</span> <span id="metaCreatedAt">-</span></div>
+          <div class="meta-item" id="metaUpdatedAtWrap" style="display: none;"><span class="meta-label">Updated:</span> <span id="metaUpdatedAt">-</span></div>
         </div>
 
         <div class="modal-footer">

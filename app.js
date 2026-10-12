@@ -74,6 +74,12 @@ const elements = {
   taskModal: document.getElementById('taskModal'),
   taskForm: document.getElementById('taskForm'),
   modalTitle: document.getElementById('modalTitle'),
+  modalSubtitle: document.getElementById('modalSubtitle'),
+  modalBadgeDot: document.getElementById('modalBadgeDot'),
+  modalMetaInfo: document.getElementById('modalMetaInfo'),
+  metaCreatedAt: document.getElementById('metaCreatedAt'),
+  metaUpdatedAt: document.getElementById('metaUpdatedAt'),
+  metaUpdatedAtWrap: document.getElementById('metaUpdatedAtWrap'),
   submitBtnText: document.getElementById('submitBtnText'),
   editTaskId: document.getElementById('editTaskId'),
   taskTitleInput: document.getElementById('taskTitleInput'),
@@ -369,19 +375,22 @@ function createBoardCardElement(task) {
 
   // Next Stage Button
   const nextStage = getNextStage(task.status);
+  const updatedBadge = task.updatedAt ? `<span class="updated-badge" title="Last updated: ${formatPrettyDateTime(task.updatedAt)}">✏️ Edited</span>` : '';
 
   card.innerHTML = `
     <div class="card-top">
       <div class="card-meta-tags">
-        <span class="priority-pill ${task.priority}">${task.priority}</span>
+        <span class="priority-pill ${task.priority}" title="Click to cycle priority" data-id="${task.id}">${task.priority}</span>
         <span class="tag-badge">${escapeHtml(task.category)}</span>
+        ${updatedBadge}
       </div>
       <div class="card-actions-menu">
-        <button class="mini-icon-btn edit-btn" title="Edit task" data-id="${task.id}">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <button class="update-action-btn edit-btn" title="Update Task Details" data-id="${task.id}">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <path d="M12 20h9"></path>
             <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
           </svg>
+          <span>Update</span>
         </button>
         <button class="mini-icon-btn delete-btn" title="Delete task" data-id="${task.id}">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -396,7 +405,7 @@ function createBoardCardElement(task) {
       <div class="task-checkbox-wrap">
         <input type="checkbox" class="task-checkbox" ${task.status === 'completed' ? 'checked' : ''} data-id="${task.id}" title="Toggle Complete">
       </div>
-      <div class="task-content">
+      <div class="task-content" title="Click to update task details">
         <h3 class="task-title">${escapeHtml(task.title)}</h3>
         ${task.description ? `<p class="task-desc">${escapeHtml(task.description)}</p>` : ''}
       </div>
@@ -413,6 +422,17 @@ function createBoardCardElement(task) {
   // Attach card event listeners
   card.querySelector('.task-checkbox').addEventListener('change', (e) => {
     toggleTaskCompletion(task.id, e.target.checked);
+  });
+
+  // Clicking on card content opens update modal
+  card.querySelector('.task-content').addEventListener('click', () => {
+    openEditTaskModal(task.id);
+  });
+
+  // Quick inline priority cycle on click
+  card.querySelector('.priority-pill').addEventListener('click', (e) => {
+    e.stopPropagation();
+    cycleTaskPriority(task.id);
   });
 
   card.querySelector('.edit-btn').addEventListener('click', (e) => {
@@ -446,7 +466,7 @@ function renderListView(filteredTasks) {
       <div class="col-check">
         <input type="checkbox" class="task-checkbox" ${task.status === 'completed' ? 'checked' : ''} data-id="${task.id}">
       </div>
-      <div class="col-task">
+      <div class="col-task" style="cursor: pointer;" title="Click to update task details">
         <span class="list-title">${escapeHtml(task.title)}</span>
         ${task.description ? `<p class="list-desc-snippet">${escapeHtml(task.description)}</p>` : ''}
       </div>
@@ -454,17 +474,18 @@ function renderListView(filteredTasks) {
         <span class="tag-badge">${escapeHtml(task.category)}</span>
       </div>
       <div class="col-priority">
-        <span class="priority-pill ${task.priority}">${task.priority}</span>
+        <span class="priority-pill ${task.priority}" title="Click to cycle priority" data-id="${task.id}">${task.priority}</span>
       </div>
       <div class="col-due">
         ${task.dueDate ? `<span class="due-date-pill ${isOverdue ? 'is-overdue' : ''}">${formatPrettyDate(task.dueDate)}</span>` : '<span style="color:var(--text-dim)">-</span>'}
       </div>
       <div class="col-actions">
-        <button class="mini-icon-btn edit-btn" title="Edit" data-id="${task.id}">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <button class="list-update-btn edit-btn" title="Update Task Details" data-id="${task.id}">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <path d="M12 20h9"></path>
             <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
           </svg>
+          <span>Update</span>
         </button>
         <button class="mini-icon-btn delete-btn" title="Delete" data-id="${task.id}">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -477,6 +498,15 @@ function renderListView(filteredTasks) {
 
     row.querySelector('.task-checkbox').addEventListener('change', (e) => {
       toggleTaskCompletion(task.id, e.target.checked);
+    });
+
+    row.querySelector('.col-task').addEventListener('click', () => {
+      openEditTaskModal(task.id);
+    });
+
+    row.querySelector('.priority-pill').addEventListener('click', (e) => {
+      e.stopPropagation();
+      cycleTaskPriority(task.id);
     });
 
     row.querySelector('.edit-btn').addEventListener('click', () => {
@@ -497,7 +527,10 @@ function renderListView(filteredTasks) {
 function openAddTaskModal(defaultStatus = 'todo') {
   elements.editTaskId.value = '';
   elements.modalTitle.textContent = 'Create New Task';
+  if (elements.modalSubtitle) elements.modalSubtitle.textContent = 'Add a new task to your workflow';
   elements.submitBtnText.textContent = 'Add Task';
+  if (elements.modalMetaInfo) elements.modalMetaInfo.style.display = 'none';
+
   elements.taskForm.reset();
   elements.taskStatusSelect.value = defaultStatus;
   elements.taskPrioritySelect.value = 'medium';
@@ -513,8 +546,20 @@ function openEditTaskModal(taskId) {
   if (!task) return;
 
   elements.editTaskId.value = task.id;
-  elements.modalTitle.textContent = 'Edit Task Details';
-  elements.submitBtnText.textContent = 'Save Changes';
+  elements.modalTitle.textContent = 'Update Task';
+  if (elements.modalSubtitle) elements.modalSubtitle.textContent = 'Modify details, stage, priority, or due date';
+  elements.submitBtnText.textContent = 'Update Task';
+
+  if (elements.modalMetaInfo) {
+    elements.modalMetaInfo.style.display = 'flex';
+    elements.metaCreatedAt.textContent = formatPrettyDateTime(task.createdAt || new Date().toISOString());
+    if (task.updatedAt) {
+      elements.metaUpdatedAtWrap.style.display = 'flex';
+      elements.metaUpdatedAt.textContent = formatPrettyDateTime(task.updatedAt);
+    } else {
+      elements.metaUpdatedAtWrap.style.display = 'none';
+    }
+  }
 
   elements.taskTitleInput.value = task.title;
   elements.taskDescriptionInput.value = task.description || '';
@@ -552,7 +597,7 @@ function handleTaskFormSubmit(e) {
   const dueDate = elements.taskDueDateInput.value;
 
   if (id) {
-    // Update existing
+    // Update existing task
     const index = tasks.findIndex(t => t.id === id);
     if (index !== -1) {
       tasks[index] = {
@@ -562,12 +607,13 @@ function handleTaskFormSubmit(e) {
         priority,
         category,
         status,
-        dueDate
+        dueDate,
+        updatedAt: new Date().toISOString()
       };
-      showToast('Task updated successfully', 'success');
+      showToast('Task updated successfully! ✨', 'success');
     }
   } else {
-    // Create new
+    // Create new task
     const newTask = {
       id: 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
       title,
@@ -701,6 +747,30 @@ function formatPrettyDate(dateString) {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
+function formatPrettyDateTime(isoString) {
+  if (!isoString) return '';
+  const date = new Date(isoString);
+  if (isNaN(date.getTime())) return '';
+  return date.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
+function cycleTaskPriority(id) {
+  const task = tasks.find(t => t.id === id);
+  if (!task) return;
+  const priorities = ['low', 'medium', 'high', 'urgent'];
+  const nextIdx = (priorities.indexOf(task.priority) + 1) % priorities.length;
+  task.priority = priorities[nextIdx];
+  task.updatedAt = new Date().toISOString();
+  saveTasks();
+  render();
+  showToast(`Priority updated to ${task.priority.toUpperCase()}`, 'info');
+}
+
 function isDateOverdue(dateString) {
   if (!dateString) return false;
   const today = new Date();
@@ -726,8 +796,9 @@ function showToast(message, type = 'info') {
   }, 2800);
 }
 
-// Window global reference for inline quick buttons
+// Window global references for inline quick buttons
 window.openAddTaskModal = openAddTaskModal;
+window.openEditTaskModal = openEditTaskModal;
 
 // Run initial setup on DOM ready
 document.addEventListener('DOMContentLoaded', init);

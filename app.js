@@ -3,6 +3,8 @@
  * Pure JavaScript, Vanilla CSS, Responsive & Accessible
  */
 
+(() => {
+
 // Initial Sample Seed Data
 const DEFAULT_TASKS = [
   {
@@ -101,7 +103,11 @@ const elements = {
   clearCompletedBtn: document.getElementById('clearCompletedBtn'),
   loadSamplesBtn: document.getElementById('loadSamplesBtn'),
   emptyAddTaskBtn: document.getElementById('emptyAddTaskBtn'),
-  toastContainer: document.getElementById('toastContainer')
+  toastContainer: document.getElementById('toastContainer'),
+  confirmDeleteModal: document.getElementById('confirmDeleteModal'),
+  confirmDeleteBtn: document.getElementById('confirmDeleteBtn'),
+  confirmCancelBtn: document.getElementById('confirmCancelBtn'),
+  confirmDeleteTaskName: document.getElementById('confirmDeleteTaskName')
 };
 
 // ============================================================================
@@ -112,6 +118,7 @@ function init() {
   loadTasks();
   setupEventListeners();
   setupDragAndDrop();
+  setupDeleteConfirmModal();
   render();
 }
 
@@ -633,14 +640,62 @@ function handleTaskFormSubmit(e) {
   render();
 }
 
+// Pending delete task ID — set when confirm modal opens
+let _pendingDeleteId = null;
+
 function deleteTask(id) {
   const taskToDelete = tasks.find(t => t.id === id);
   if (!taskToDelete) return;
 
-  tasks = tasks.filter(t => t.id !== id);
+  // Show confirm modal instead of deleting directly
+  _pendingDeleteId = id;
+  const nameEl = elements.confirmDeleteTaskName;
+  nameEl.textContent = taskToDelete.title.length > 60
+    ? taskToDelete.title.substring(0, 57) + '…'
+    : taskToDelete.title;
+
+  elements.confirmDeleteModal.classList.add('is-active');
+  elements.confirmDeleteModal.setAttribute('aria-hidden', 'false');
+  elements.confirmCancelBtn.focus();
+}
+
+function _commitDeleteTask() {
+  if (!_pendingDeleteId) return;
+  const taskToDelete = tasks.find(t => t.id === _pendingDeleteId);
+  tasks = tasks.filter(t => t.id !== _pendingDeleteId);
+  _pendingDeleteId = null;
+  _closeConfirmModal();
   saveTasks();
   render();
-  showToast(`Deleted "${taskToDelete.title.substring(0, 24)}..."`, 'info');
+  if (taskToDelete) {
+    const shortTitle = taskToDelete.title.length > 30
+      ? taskToDelete.title.substring(0, 28) + '…'
+      : taskToDelete.title;
+    showToast(`"${shortTitle}" deleted`, 'error');
+  }
+}
+
+function _closeConfirmModal() {
+  _pendingDeleteId = null;
+  elements.confirmDeleteModal.classList.remove('is-active');
+  elements.confirmDeleteModal.setAttribute('aria-hidden', 'true');
+}
+
+function setupDeleteConfirmModal() {
+  elements.confirmDeleteBtn.addEventListener('click', _commitDeleteTask);
+  elements.confirmCancelBtn.addEventListener('click', _closeConfirmModal);
+
+  // Close on backdrop click
+  elements.confirmDeleteModal.addEventListener('click', (e) => {
+    if (e.target === elements.confirmDeleteModal) _closeConfirmModal();
+  });
+
+  // Close on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && elements.confirmDeleteModal.classList.contains('is-active')) {
+      _closeConfirmModal();
+    }
+  });
 }
 
 function toggleTaskCompletion(id, isChecked) {
@@ -802,3 +857,5 @@ window.openEditTaskModal = openEditTaskModal;
 
 // Run initial setup on DOM ready
 document.addEventListener('DOMContentLoaded', init);
+
+})(); // end IIFE
